@@ -1,16 +1,37 @@
 import streamlit as st
 import subprocess
+import os
 
-def check_conda_available():
-    """Проверяет, доступен ли conda в системе"""
+
+def find_conda():
+    """Находит conda в системе"""
     try:
-        # Пробуем выполнить conda --version
-        result = subprocess.run(["conda", "--version"],
-                              capture_output=True, text=True, timeout=10)
-        return result.returncode == 0
-    except:
-        return False
+        # Для Windows
+        if os.name == 'nt':
+            result = subprocess.run(["where", "conda"],
+                                    capture_output=True, text=True, timeout=10)
+        # Для Linux/MacOS
+        else:
+            result = subprocess.run(["which", "conda"],
+                                    capture_output=True, text=True, timeout=10)
 
-st.title("Check")
+        if result.returncode == 0:
+            paths = result.stdout.strip().split('\n')
+            return True, paths
+        return False, []
 
-st.write(check_conda_available())
+    except Exception as e:
+        return False, []
+
+
+st.title("Поиск Conda")
+
+found, paths = find_conda()
+st.write(f"Conda найден: {found}")
+
+if found:
+    st.write("Найденные пути:")
+    for path in paths:
+        st.code(path)
+else:
+    st.warning("Conda не найден в системе")
